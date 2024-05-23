@@ -199,6 +199,7 @@ protected:
     std::ifstream drr; /// The input .drr file
     std::ifstream his; /// The input .his file
 
+    std::map<unsigned long long, std::pair<unsigned int, bool>> waiting_writes; 
     int hists_processed; /// The number of histograms which have been processed
     int err_flag; /// Integer value for storing error information
 
@@ -340,7 +341,6 @@ public:
 
 struct WriteQueueObject
 {
-
     /// @brief Location in the file that needs to be written to
     unsigned long long bufferLocation;
     /// @brief If the drr_entry for the histogram indicates that this histogram is integer valued
@@ -417,8 +417,8 @@ class HisFileWriter final
         static void Stop(){
             if(!instance->running) {return;}
             instance->stopCalled = true;
-            instance->running = false;
             instance->HisFileWriterEventThread.join();
+            instance->running = false;
         }
 
         /// @brief Starts the execution thread fo the HisFileWriter which does nothing until
@@ -445,7 +445,6 @@ class HisFileWriter final
             {
                 ProcessQueue();
                 FlushWrites();
-                usleep(10);
             }
             Finalize();
         }
@@ -474,9 +473,10 @@ private:
     /// Find the specified .drr entry in the drr list using its histogram id
     std::shared_ptr<drr_entry> find_drr_in_list(unsigned int hisID_);
 
-    /// Enqueues a write in the output file with a 
-    void EnqueueWrite(std::shared_ptr<drr_entry> entry, unsigned int bin, unsigned int weight);
 
+    /// @brief Pushes a WriteQueueObject to the 
+    /// @param obj 
+    void PushWrite(WriteQueueObject obj);
 public:
     OutputHisFile();
 
